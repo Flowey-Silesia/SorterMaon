@@ -64,54 +64,66 @@ function showDuel(id1, id2) {
     const duelContainer = document.getElementById('duel');
     duelContainer.innerHTML = "";
 
-    function createMusicCard(music, isLeft) {
-        const card = document.createElement('div');
-        card.className = 'music-card';
+	function createMusicCard(music, isLeft) {
+    const card = document.createElement('div');
+    card.className = 'music-card';
 
-        let videoElement;
+    let mediaElement = null;
 
-        if (video || music.mp3 === null) {
+    // Verificar si hay video disponible y el modo video está activado
+    if (video && music.video) {
+        try {
             if (music.video.includes("youtube.com")) {
                 const videoId = new URL(music.video).searchParams.get("v");
-                videoElement = `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`;
+                mediaElement = `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`;
             } else if (music.video.endsWith(".webm") || music.video.endsWith(".mp4")) {
                 if (music.video.includes("animemusicquiz")) {
-                    videoElement = `<video controls><source src="https://${region}dist.animemusicquiz.com/${music.video.split('/').pop()}" type="video/webm"></video>`;
+                    mediaElement = `<video controls><source src="https://${region}dist.animemusicquiz.com/${music.video.split('/').pop()}" type="video/webm"></video>`;
                 } else {
-                    videoElement = `<video controls><source src="${music.video}" type="video/webm"></video>`;
+                    mediaElement = `<video controls><source src="${music.video}" type="video/webm"></video>`;
                 }
-            } else {
-                videoElement = "<div>Vidéo non disponible</div>";
             }
-        } else if (music.mp3 !== null) {
-            if (music.video.includes("animemusicquiz")) {
-                videoElement = `<audio controls><source src="https://${region}dist.animemusicquiz.com/${music.video.split('/').pop()}" type="audio/mp3"></audio>`;
-            } else {
-                videoElement = `<audio controls><source src="${music.mp3}" type="audio/mp3"></audio>`;
-            }
-
-        } else {
-            videoElement = "<div>MP3 not available!</div>";
+        } catch (e) {
+            console.warn("Error al procesar video:", e);
         }
+    }
 
-        card.innerHTML = `
-      ${videoElement}
-      <div class="anime">${music.anime}</div>
-      <div class="song">${music.name}</div>
+    // Si no hay video o falló la creación, usar MP3 si existe
+    if (!mediaElement && music.mp3) {
+        try {
+            if (music.mp3.includes("animemusicquiz")) {
+                mediaElement = `<audio controls><source src="https://${region}dist.animemusicquiz.com/${music.mp3.split('/').pop()}" type="audio/mp3"></audio>`;
+            } else {
+                mediaElement = `<audio controls><source src="${music.mp3}" type="audio/mp3"></audio>`;
+            }
+        } catch (e) {
+            console.warn("Error al procesar audio:", e);
+        }
+    }
+
+    // Si no hay ningún medio disponible
+    if (!mediaElement) {
+        mediaElement = '<div class="no-media">No hay contenido multimedia disponible</div>';
+    }
+
+    card.innerHTML = `
+        ${mediaElement}
+        <div class="anime">${music.anime || "Anime desconocido"}</div>
+        <div class="song">${music.name || "Canción sin nombre"}</div>
     `;
 
-        const button = document.createElement('button');
-        button.textContent = "PICK";
-        button.addEventListener('click', () => {
-            if (isLeft) {
-                pick('left');
-            } else {
-                pick('right');
-            }
-        });
+    const button = document.createElement('button');
+    button.textContent = "PICK";
+    button.addEventListener('click', () => {
+        if (isLeft) {
+             pick('left');
+        } else {
+             pick('right');
+        }
+     });
 
-        card.appendChild(button);
-        return card;
+     card.appendChild(button);
+     return card;
     }
 
     if (id1 < musicData.length && id2 < musicData.length) {
